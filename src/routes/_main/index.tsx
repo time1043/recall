@@ -1,9 +1,11 @@
 import { ChartAreaInteractive } from '@/components/chart-area-interactive'
 import { createFileRoute } from '@tanstack/react-router'
 
-export const Route = createFileRoute('/')({ component: Home })
+export const Route = createFileRoute('/_main/')({
+  component: RouteComponent,
+})
 
-function Home() {
+function RouteComponent() {
   return (
     <>
       <ChartAreaInteractive />
