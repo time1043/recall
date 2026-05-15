@@ -1,24 +1,12 @@
+import { useAuth } from '@/hooks/use-auth'
+import { authClient } from '@/lib/auth-client'
 import { Link } from '@tanstack/react-router'
 import { Button, buttonVariants } from '../ui/button'
 import { ModeToggle } from './mode-toggle'
-import { authClient } from '@/lib/auth-client'
-import { toast } from 'sonner'
 
 export default function Navbar() {
   const { data: session, isPending } = authClient.useSession()
-
-  async function handleSignOut() {
-    await authClient.signOut({
-      fetchOptions: {
-        onSuccess: () => {
-          toast.success('Signed out successfully')
-        },
-        onError: ({ error }) => {
-          toast.error(`Something went wrong: ${error.message}`)
-        },
-      },
-    })
-  }
+  const { signOut } = useAuth()
 
   return (
     <nav className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/69">
@@ -37,10 +25,10 @@ export default function Navbar() {
 
           {isPending ? null : session ? (
             <>
-              <Button variant="secondary" onClick={handleSignOut}>
+              <Button variant="secondary" onClick={signOut}>
                 Layout
               </Button>
-              <Link to="/" className={buttonVariants()}>
+              <Link to="/dashboard" className={buttonVariants()}>
                 Dashboard
               </Link>
             </>
