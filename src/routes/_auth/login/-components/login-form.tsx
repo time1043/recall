@@ -18,10 +18,12 @@ import { authClient } from '@/lib/auth-client'
 import { loginFormSchema } from '@/schemas/auth'
 import { useForm } from '@tanstack/react-form'
 import { Link, useNavigate } from '@tanstack/react-router'
+import { useTransition } from 'react'
 import { toast } from 'sonner'
 
 export function LoginForm() {
   const navigate = useNavigate()
+  const [isPending, startTransition] = useTransition()
 
   const form = useForm({
     defaultValues: {
@@ -31,21 +33,23 @@ export function LoginForm() {
     validators: {
       onSubmit: loginFormSchema,
     },
-    onSubmit: async ({ value }) => {
-      const { email, password } = value
-      await authClient.signIn.email({
-        email,
-        password,
-        // callbackURL: '/dashboard',
-        fetchOptions: {
-          onSuccess: () => {
-            toast.success('Logged in successfully')
-            navigate({ to: '/' })
+    onSubmit: ({ value }) => {
+      startTransition(async () => {
+        const { email, password } = value
+        await authClient.signIn.email({
+          email,
+          password,
+          // callbackURL: '/dashboard',
+          fetchOptions: {
+            onSuccess: () => {
+              toast.success('Logged in successfully')
+              navigate({ to: '/' })
+            },
+            onError: ({ error }) => {
+              toast.error(`Something went wrong: ${error.message}`)
+            },
           },
-          onError: ({ error }) => {
-            toast.error(`Something went wrong: ${error.message}`)
-          },
-        },
+        })
       })
     },
   })
@@ -119,7 +123,9 @@ export function LoginForm() {
               }}
             />
             <Field>
-              <Button type="submit">Login</Button>
+              <Button disabled={isPending} type="submit">
+                {isPending ? 'Logging in...' : 'Login'}
+              </Button>
               <FieldDescription className="text-center">
                 Don&apos;t have an account? <Link to="/signup">Sign up</Link>
               </FieldDescription>
