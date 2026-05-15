@@ -1,8 +1,25 @@
 import { Link } from '@tanstack/react-router'
-import { buttonVariants } from '../ui/button'
+import { Button, buttonVariants } from '../ui/button'
 import { ModeToggle } from './mode-toggle'
+import { authClient } from '@/lib/auth-client'
+import { toast } from 'sonner'
 
 export default function Navbar() {
+  const { data: session, isPending } = authClient.useSession()
+
+  async function handleSignOut() {
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          toast.success('Signed out successfully')
+        },
+        onError: ({ error }) => {
+          toast.error(`Something went wrong: ${error.message}`)
+        },
+      },
+    })
+  }
+
   return (
     <nav className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/69">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
@@ -17,15 +34,29 @@ export default function Navbar() {
 
         <div className="flex items-center gap-3">
           <ModeToggle />
-          <Link
-            to="/login"
-            className={buttonVariants({ variant: 'secondary' })}
-          >
-            Login
-          </Link>
-          <Link to="/signup" className={buttonVariants()}>
-            Sign Up
-          </Link>
+
+          {isPending ? null : session ? (
+            <>
+              <Button variant="secondary" onClick={handleSignOut}>
+                Layout
+              </Button>
+              <Link to="/" className={buttonVariants()}>
+                Dashboard
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link
+                to="/login"
+                className={buttonVariants({ variant: 'secondary' })}
+              >
+                Login
+              </Link>
+              <Link to="/signup" className={buttonVariants()}>
+                Sign Up
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </nav>
