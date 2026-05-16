@@ -5,10 +5,15 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar'
+import { getSessionFn } from '@/data/session'
 import { createFileRoute, Outlet } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/dashboard')({
   component: RouteComponent,
+  loader: async () => {
+    const { user } = await getSessionFn()
+    return { user }
+  },
 })
 
 function RouteComponent() {

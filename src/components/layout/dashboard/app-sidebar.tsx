@@ -10,8 +10,8 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from '@/components/ui/sidebar'
-import { authClient } from '@/lib/auth-client'
 import type { NavItem } from '@/lib/types'
+import { Route } from '@/routes/dashboard/route'
 import { Link, linkOptions } from '@tanstack/react-router'
 import { BookmarkIcon, Compass, Import } from 'lucide-react'
 
@@ -37,7 +37,7 @@ const navItems: NavItem[] = linkOptions([
 ])
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { data } = authClient.useSession()
+  const { user } = Route.useLoaderData()
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -66,7 +66,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
 
       <SidebarFooter>
-        <NavUser user={data?.user} />
+        <NavUser user={user} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

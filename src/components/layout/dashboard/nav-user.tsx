@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/sidebar'
 import { useAuth } from '@/hooks/use-auth'
 import type { User } from 'better-auth'
+
 import {
   BadgeCheckIcon,
   BellIcon,
