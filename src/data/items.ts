@@ -1,9 +1,10 @@
 import { prisma } from '@/db'
 import { firecrawl } from '@/lib/firecrawl'
 import type { ExtractType } from '@/schemas/import'
-import { importSchema } from '@/schemas/import'
+import { extractSchema, importSchema } from '@/schemas/import'
 import { createServerFn } from '@tanstack/react-start'
 import { getSessionFn } from './session'
+import z from 'zod'
 
 // https://tanstack.com/start/v0/docs/framework/react/guide/server-functions#parameters--validation
 
@@ -33,8 +34,8 @@ export const scrapeUrlFn = createServerFn({ method: 'POST' })
           'markdown',
           {
             type: 'json',
-            // schema: extractSchema,
-            prompt: 'please extract the author and also publishedAt timestamps',
+            schema: z.toJSONSchema(extractSchema),
+            // prompt: 'please extract the author and also publishedAt timestamps',
           },
         ], // markdown, html, images
         // onlyMainContent: true, // By default the scraper returns only the main content. Set to false to return full page content including navbar and so on.
