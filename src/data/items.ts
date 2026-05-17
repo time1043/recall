@@ -1,22 +1,21 @@
 import { prisma } from '@/db'
 import { firecrawl } from '@/lib/firecrawl'
+import { authFnMiddleware } from '@/middlewares/auth'
 import type { ExtractType } from '@/schemas/import'
 import { extractSchema, importSchema } from '@/schemas/import'
 import { createServerFn } from '@tanstack/react-start'
-import { getSessionFn } from './session'
 import z from 'zod'
 
 // https://tanstack.com/start/v0/docs/framework/react/guide/server-functions#parameters--validation
 
 export const scrapeUrlFn = createServerFn({ method: 'POST' })
+  .middleware([authFnMiddleware])
   .inputValidator(importSchema)
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     // const url = 'https://www.firecrawl.dev/blog/introducing-agent'
     const { url } = data
+    const userId = context.session.user.id
 
-    const {
-      user: { id: userId },
-    } = await getSessionFn()
     const item = await prisma.savedItem.create({
       data: {
         url,
