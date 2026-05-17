@@ -1,7 +1,7 @@
 import { prisma } from '@/db'
 import { firecrawl } from '@/lib/firecrawl'
 import type { ExtractType } from '@/schemas/import'
-import { importSchema } from '@/schemas/import'
+import { extractSchema, importSchema } from '@/schemas/import'
 import { createServerFn } from '@tanstack/react-start'
 import { getSessionFn } from './session'
 
@@ -33,8 +33,8 @@ export const scrapeUrlFn = createServerFn({ method: 'POST' })
           'markdown',
           {
             type: 'json',
-            // schema: extractSchema,
-            prompt: 'please extract the author and also publishedAt timestamps',
+            schema: extractSchema,
+            // prompt: 'please extract the author and also publishedAt timestamps',
           },
         ], // markdown, html, images
         // onlyMainContent: true, // By default the scraper returns only the main content. Set to false to return full page content including navbar and so on.
