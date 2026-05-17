@@ -85,10 +85,16 @@ export const mapUrlFn = createServerFn({ method: 'POST' })
     // const search = 'blog'
     const { url, search } = data
 
-    const result = await firecrawl.map(url, {
-      limit: 25,
-      search,
-      // location: { country: 'US', languages: ['en'] }, // default
-    })
-    console.log({ result })
+    try {
+      const result = await firecrawl.map(url, {
+        limit: 25,
+        search,
+        // location: { country: 'US', languages: ['en'] }, // default
+      })
+      const { links } = result
+
+      return { success: true, data: links }
+    } catch (error) {
+      return { success: false, data: [] }
+    }
   })
