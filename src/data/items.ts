@@ -2,7 +2,7 @@ import { prisma } from '@/db'
 import { firecrawl } from '@/lib/firecrawl'
 import { authFnMiddleware } from '@/middlewares/auth'
 import type { ExtractType } from '@/schemas/import'
-import { extractSchema, importSchema } from '@/schemas/import'
+import { bulkImportSchema, extractSchema, importSchema } from '@/schemas/import'
 import { createServerFn } from '@tanstack/react-start'
 import z from 'zod'
 
@@ -75,4 +75,20 @@ export const scrapeUrlFn = createServerFn({ method: 'POST' })
 
       return { success: false, data: failedItem }
     }
+  })
+
+export const mapUrlFn = createServerFn({ method: 'POST' })
+  .middleware([authFnMiddleware])
+  .inputValidator(bulkImportSchema)
+  .handler(async ({ data }) => {
+    // const url = 'https://www.firecrawl.dev/blog'
+    // const search = 'blog'
+    const { url, search } = data
+
+    const result = await firecrawl.map(url, {
+      limit: 25,
+      search,
+      // location: { country: 'US', languages: ['en'] }, // default
+    })
+    console.log({ result })
   })

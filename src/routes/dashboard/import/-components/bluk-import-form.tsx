@@ -13,6 +13,7 @@ import {
   FieldLabel,
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { mapUrlFn } from '@/data/items'
 import { bulkImportSchema } from '@/schemas/import'
 import { useForm } from '@tanstack/react-form'
 import { Loader2 } from 'lucide-react'
@@ -31,7 +32,7 @@ export default function BlukImportForm() {
     },
     onSubmit: ({ value }) => {
       startTransition(async () => {
-        console.log({ value })
+        await mapUrlFn({ data: value })
       })
     },
   })
