@@ -11,8 +11,8 @@ import {
   SidebarRail,
 } from '@/components/ui/sidebar'
 import type { NavItem } from '@/lib/types'
-import { Route } from '@/routes/dashboard/route'
 import { Link, linkOptions } from '@tanstack/react-router'
+import type { User } from 'better-auth'
 import { BookmarkIcon, Compass, Import } from 'lucide-react'
 
 const navItems: NavItem[] = linkOptions([
@@ -36,11 +36,13 @@ const navItems: NavItem[] = linkOptions([
   },
 ])
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { user } = Route.useLoaderData()
+type AppSidebarProps = {
+  user: User
+}
 
+export function AppSidebar({ user }: AppSidebarProps) {
   return (
-    <Sidebar collapsible="icon" {...props}>
+    <Sidebar collapsible="icon">
       <SidebarHeader>
         {/* <TeamSwitcher teams={data.teams} /> */}
         <SidebarMenu>
@@ -66,7 +68,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
 
       <SidebarFooter>
-        <NavUser user={user} />
+        <NavUser {...{ user }} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
