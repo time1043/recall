@@ -59,6 +59,7 @@ export const ModelName = {
   Session: 'Session',
   Account: 'Account',
   Verification: 'Verification',
+  SavedItem: 'SavedItem',
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -143,6 +144,25 @@ export const VerificationScalarFieldEnum = {
 
 export type VerificationScalarFieldEnum =
   (typeof VerificationScalarFieldEnum)[keyof typeof VerificationScalarFieldEnum]
+
+export const SavedItemScalarFieldEnum = {
+  id: 'id',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  url: 'url',
+  title: 'title',
+  content: 'content',
+  summary: 'summary',
+  tags: 'tags',
+  author: 'author',
+  status: 'status',
+  publishedAt: 'publishedAt',
+  ogImage: 'ogImage',
+  userId: 'userId',
+} as const
+
+export type SavedItemScalarFieldEnum =
+  (typeof SavedItemScalarFieldEnum)[keyof typeof SavedItemScalarFieldEnum]
 
 export const SortOrder = {
   asc: 'asc',

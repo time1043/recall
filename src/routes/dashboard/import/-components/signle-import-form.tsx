@@ -18,6 +18,7 @@ import { importSchema } from '@/schemas/import'
 import { useForm } from '@tanstack/react-form'
 import { Loader2 } from 'lucide-react'
 import { useTransition } from 'react'
+import { toast } from 'sonner'
 
 export default function SignleImportForm() {
   const [isPending, startTransition] = useTransition()
@@ -31,7 +32,9 @@ export default function SignleImportForm() {
     },
     onSubmit: ({ value }) => {
       startTransition(async () => {
-        await scrapeUrlFn({ data: value })
+        const { success } = await scrapeUrlFn({ data: value })
+        if (!success) toast.error('Something went wrong')
+        if (success) toast.success('Scraped successfully')
       })
     },
   })

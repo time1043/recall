@@ -14,15 +14,16 @@ model Todo {
 }
 
 model User {
-  id            String    @id
+  id            String      @id
   name          String
   email         String
-  emailVerified Boolean   @default(false)
+  emailVerified Boolean     @default(false)
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
   sessions      Session[]
   accounts      Account[]
+  savedItems    SavedItem[]
 
   @@unique([email])
   @@map("user")
@@ -74,4 +75,32 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+model SavedItem {
+  // Default
+  id          String     @id @default(uuid())
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  // Content
+  url         String
+  title       String?
+  content     String? // Clean markdown from Firecrawl
+  summary     String? // AI-generated summary
+  tags        String[] // AI-extracted tags
+  author      String?
+  status      ItemStatus @default(PENDING)
+  publishedAt DateTime?
+  ogImage     String?
+  // Relation
+  // 1 User : n SavedItem; 1 SavedItem : 1 User
+  user        User       @relation(fields: [userId], references: [id])
+  userId      String
+}
+
+enum ItemStatus {
+  PENDING // Just saved, not scraped yet
+  PROCESSING // Firecrawl is working
+  COMPLETED // Ready to View
+  FAILED // Scraping Failed
 }
