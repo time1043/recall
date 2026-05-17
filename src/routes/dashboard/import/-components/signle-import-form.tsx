@@ -13,6 +13,7 @@ import {
   FieldLabel,
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { scrapeUrlFn } from '@/data/items'
 import { importSchema } from '@/schemas/import'
 import { useForm } from '@tanstack/react-form'
 import { Loader2 } from 'lucide-react'
@@ -30,7 +31,7 @@ export default function SignleImportForm() {
     },
     onSubmit: ({ value }) => {
       startTransition(async () => {
-        console.log({ value })
+        await scrapeUrlFn({ data: value })
       })
     },
   })
