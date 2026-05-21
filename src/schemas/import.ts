@@ -9,9 +9,13 @@ export const bulkImportSchema = z.object({
   search: z.string(),
 })
 
+export const bulkScrapeSchema = z.object({
+  urls: z.array(z.url()),
+})
+
 // For firecrawl ai
 export const extractSchema = z.object({
   author: z.string().nullable(),
   publishedAt: z.string().nullable(),
 })
-export type ExtractType = z.infer<typeof extractSchema>
+// export type ExtractType = z.infer<typeof extractSchema>
