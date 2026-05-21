@@ -24,6 +24,7 @@ const itemsSearchSchema = z.object({
     .default('all')
     .catch('all'),
 })
+type ItemsSearch = z.infer<typeof itemsSearchSchema>
 
 export const Route = createFileRoute('/dashboard/items/')({
   component: RouteComponent,
@@ -34,6 +35,17 @@ export const Route = createFileRoute('/dashboard/items/')({
 function RouteComponent() {
   const { success, data } = Route.useLoaderData()
   if (!success) toast.error('Something went wrong')
+
+  const { q, status } = Route.useSearch()
+  const navigate = Route.useNavigate()
+  // const navigate = useNavigate({ from: Route.fullPath })
+
+  function setSearch(params: Partial<ItemsSearch>) {
+    navigate({
+      search: { q, status, ...params },
+      replace: true,
+    })
+  }
 
   return (
     <div className="flex flex-1 flex-col gap-6">
@@ -47,16 +59,23 @@ function RouteComponent() {
 
       {/* Search and Filter controls */}
       <div className="flex gap-4">
-        <Input placeholder="Search by title or tags" />
-        <Select>
+        <Input
+          placeholder="Search by title or tags"
+          value={q}
+          onChange={(e) => setSearch({ q: e.target.value })}
+        />
+        <Select
+          value={status}
+          onValueChange={(v) => setSearch({ status: v as typeof status })}
+        >
           <SelectTrigger className="w-40">
             <SelectValue placeholder="Filter by status" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Statuses</SelectItem>
-            {Object.values(ItemStatus).map((status) => (
-              <SelectItem key={status} value={status}>
-                {status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()}
+            {Object.values(ItemStatus).map((s) => (
+              <SelectItem key={s} value={s}>
+                {s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()}
               </SelectItem>
             ))}
           </SelectContent>
