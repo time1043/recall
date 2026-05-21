@@ -2,6 +2,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { getItemsFn } from '@/data/items'
+import { copyToClipboard } from '@/lib/clipboard'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { Copy } from 'lucide-react'
 import { toast } from 'sonner'
@@ -41,7 +42,15 @@ function RouteComponent() {
               >
                 {item.status.toLowerCase()}
               </Badge>
-              <Button variant="outline" size="icon" className="size-8">
+              <Button
+                variant="outline"
+                size="icon"
+                className="size-8"
+                onClick={async (e) => {
+                  e.preventDefault()
+                  await copyToClipboard(item.url)
+                }}
+              >
                 <Copy className="size-4" />
               </Button>
             </div>
