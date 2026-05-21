@@ -15,10 +15,20 @@ import { copyToClipboard } from '@/lib/clipboard'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { Copy } from 'lucide-react'
 import { toast } from 'sonner'
+import { z } from 'zod'
+
+const itemsSearchSchema = z.object({
+  q: z.string().default(''),
+  status: z
+    .union([z.literal('all'), z.enum(ItemStatus)])
+    .default('all')
+    .catch('all'),
+})
 
 export const Route = createFileRoute('/dashboard/items/')({
   component: RouteComponent,
   loader: () => getItemsFn(),
+  validateSearch: itemsSearchSchema,
 })
 
 function RouteComponent() {
