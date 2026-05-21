@@ -1,6 +1,3 @@
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -11,12 +8,11 @@ import {
 } from '@/components/ui/select'
 import { getItemsFn } from '@/data/items'
 import { ItemStatus } from '@/generated/prisma/enums'
-import { copyToClipboard } from '@/lib/clipboard'
-import { createFileRoute, Link } from '@tanstack/react-router'
-import { Copy } from 'lucide-react'
+import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { z } from 'zod'
+import ItemList from './-components/items-list'
 
 const itemsSearchSchema = z.object({
   q: z.string().default(''),
@@ -25,7 +21,7 @@ const itemsSearchSchema = z.object({
     .default('all')
     .catch('all'),
 })
-type ItemsSearch = z.infer<typeof itemsSearchSchema>
+export type ItemsSearch = z.infer<typeof itemsSearchSchema>
 
 export const Route = createFileRoute('/dashboard/items/')({
   component: RouteComponent,
@@ -61,18 +57,6 @@ function RouteComponent() {
 
     return () => clearTimeout(timeoutId)
   }, [searchInput, q, navigate])
-
-  const filteredData = data.filter((item) => {
-    // Filter by search query (matches title or tags)
-    const matchesQuery =
-      q === '' ||
-      item.title?.toLowerCase().includes(q.toLowerCase()) ||
-      item.tags.some((tag) => tag.toLowerCase().includes(q.toLowerCase()))
-    // Filter by status
-    const matchesStatus = status === 'all' || item.status === status
-
-    return matchesQuery && matchesStatus
-  })
 
   return (
     <div className="flex flex-1 flex-col gap-6">
@@ -110,57 +94,7 @@ function RouteComponent() {
       </div>
 
       {/* List of saved items */}
-      <div className="grid gap-6 md:grid-cols-2">
-        {filteredData.map((item) => (
-          <Card
-            key={item.id}
-            className="group overflow-hidden transition-all hover:shadow-lg pt-0"
-          >
-            <Link to="/dashboard" className="block">
-              {item.ogImage && (
-                <div className="aspect-video w-full overflow-hidden bg-muted">
-                  <img
-                    src={item.ogImage}
-                    alt={item.title ?? 'Article Thumbnail'}
-                    className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                  />
-                </div>
-              )}
-            </Link>
-
-            <CardHeader className="space-y-3 pt-4">
-              <div className="flex items-center justify-between gap-2">
-                <Badge
-                  variant={
-                    item.status === 'COMPLETED' ? 'default' : 'secondary'
-                  }
-                >
-                  {item.status.toLowerCase()}
-                </Badge>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="size-8"
-                  onClick={async (e) => {
-                    e.preventDefault()
-                    await copyToClipboard(item.url)
-                  }}
-                >
-                  <Copy className="size-4" />
-                </Button>
-              </div>
-
-              <CardTitle className="line-clamp-1 text-xl leading-snug group-hover:text-primary transition-colors">
-                {item.title}
-              </CardTitle>
-
-              {item.author && (
-                <p className="text-xs text-muted-foreground">{item.author}</p>
-              )}
-            </CardHeader>
-          </Card>
-        ))}
-      </div>
+      <ItemList {...{ data, q, status }} />
     </div>
   )
 }

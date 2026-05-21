@@ -49,6 +49,7 @@ export const bulkScrapeUrlsFn = createServerFn({ method: 'POST' })
 export const getItemsFn = createServerFn({ method: 'GET' })
   .middleware([authFnMiddleware])
   .handler(async ({ context }) => {
+    await new Promise((resolve) => setTimeout(resolve, 3000))
     const userId = context.session.user.id
 
     try {
