@@ -62,6 +62,18 @@ function RouteComponent() {
     return () => clearTimeout(timeoutId)
   }, [searchInput, q, navigate])
 
+  const filteredData = data.filter((item) => {
+    // Filter by search query (matches title or tags)
+    const matchesQuery =
+      q === '' ||
+      item.title?.toLowerCase().includes(q.toLowerCase()) ||
+      item.tags.some((tag) => tag.toLowerCase().includes(q.toLowerCase()))
+    // Filter by status
+    const matchesStatus = status === 'all' || item.status === status
+
+    return matchesQuery && matchesStatus
+  })
+
   return (
     <div className="flex flex-1 flex-col gap-6">
       {/* Title */}
@@ -99,7 +111,7 @@ function RouteComponent() {
 
       {/* List of saved items */}
       <div className="grid gap-6 md:grid-cols-2">
-        {data.map((item) => (
+        {filteredData.map((item) => (
           <Card
             key={item.id}
             className="group overflow-hidden transition-all hover:shadow-lg pt-0"
