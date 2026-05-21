@@ -5,7 +5,9 @@ import {
   bulkScrapeSchema,
   importSchema,
 } from '@/schemas/import'
+import { notFound } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
+import z from 'zod'
 import {
   bulkScrapeUrlsService,
   mapUrlService,
@@ -49,7 +51,6 @@ export const bulkScrapeUrlsFn = createServerFn({ method: 'POST' })
 export const getItemsFn = createServerFn({ method: 'GET' })
   .middleware([authFnMiddleware])
   .handler(async ({ context }) => {
-    await new Promise((resolve) => setTimeout(resolve, 3000))
     const userId = context.session.user.id
 
     try {
@@ -64,5 +65,28 @@ export const getItemsFn = createServerFn({ method: 'GET' })
       return { success: true, data: items }
     } catch (error) {
       return { success: false, data: [] }
+    }
+  })
+
+export const getItemByIdFn = createServerFn({ method: 'GET' })
+  .middleware([authFnMiddleware])
+  .inputValidator(z.object({ id: z.string() }))
+  .handler(async ({ context, data }) => {
+    const userId = context.session.user.id
+    const { id } = data
+
+    try {
+      const item = await prisma.savedItem.findUnique({
+        where: {
+          id,
+          userId,
+        },
+      })
+      // https://tanstack.com/router/v1/docs/api/router/notFoundFunction
+      if (!item) throw notFound()
+
+      return { success: true, data: item }
+    } catch (error) {
+      return { success: false, data: null }
     }
   })
