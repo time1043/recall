@@ -14,6 +14,7 @@ import { ItemStatus } from '@/generated/prisma/enums'
 import { copyToClipboard } from '@/lib/clipboard'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { Copy } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { z } from 'zod'
 
@@ -40,12 +41,26 @@ function RouteComponent() {
   const navigate = Route.useNavigate()
   // const navigate = useNavigate({ from: Route.fullPath })
 
+  const [searchInput, setSearchInput] = useState(q)
+
   function setSearch(params: Partial<ItemsSearch>) {
     navigate({
       search: { q, status, ...params },
       replace: true,
     })
   }
+
+  useEffect(() => {
+    if (searchInput === q) return
+
+    // debounce
+    const timeoutId = setTimeout(() => {
+      // navigate({ search: (prev) => ({ ...prev, q: searchInput }) })
+      setSearch({ q: searchInput })
+    }, 800)
+
+    return () => clearTimeout(timeoutId)
+  }, [searchInput, q, navigate])
 
   return (
     <div className="flex flex-1 flex-col gap-6">
@@ -61,8 +76,8 @@ function RouteComponent() {
       <div className="flex gap-4">
         <Input
           placeholder="Search by title or tags"
-          value={q}
-          onChange={(e) => setSearch({ q: e.target.value })}
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
         />
         <Select
           value={status}
