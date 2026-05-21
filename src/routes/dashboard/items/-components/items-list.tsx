@@ -9,11 +9,34 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty'
+import { Skeleton } from '@/components/ui/skeleton'
 import type { getItemsFn } from '@/data/items'
 import { copyToClipboard } from '@/lib/clipboard'
 import { Link } from '@tanstack/react-router'
 import { Copy, Inbox } from 'lucide-react'
+import { use } from 'react'
+import { toast } from 'sonner'
 import type { ItemsSearch } from '..'
+
+type ItemListResolvedProps = {
+  itemsPromise: ReturnType<typeof getItemsFn>
+  q: ItemsSearch['q']
+  status: ItemsSearch['status']
+}
+
+export function ItemListResolved({
+  itemsPromise,
+  q,
+  status,
+}: ItemListResolvedProps) {
+  const { success, data } = use(itemsPromise)
+  if (!success) {
+    toast.error('Something went wrong')
+    return null
+  }
+
+  return <ItemList {...{ data, q, status }} />
+}
 
 type ItemListProps = {
   // data: SavedItemModel[]
@@ -109,6 +132,29 @@ export default function ItemList({ data, q, status }: ItemListProps) {
             {item.author && (
               <p className="text-xs text-muted-foreground">{item.author}</p>
             )}
+          </CardHeader>
+        </Card>
+      ))}
+    </div>
+  )
+}
+
+export function ItemListGridSkeleton() {
+  return (
+    <div className="grid gap-6 md:grid-cols-2">
+      {[1, 2, 3, 4].map((i) => (
+        <Card key={i} className="overflow-hidden pt-0">
+          <Skeleton className="aspect-video w-full" />
+          <CardHeader className="space-y-3">
+            {/* Status & Copy Button */}
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-5 w-20 rounded-full" />
+              <Skeleton className="size-8 rounded-md" />
+            </div>
+            {/* Title */}
+            <Skeleton className="h-6 w-full" />
+            {/* Author */}
+            <Skeleton className="h-4 w-40" />
           </CardHeader>
         </Card>
       ))}

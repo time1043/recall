@@ -9,10 +9,12 @@ import {
 import { getItemsFn } from '@/data/items'
 import { ItemStatus } from '@/generated/prisma/enums'
 import { createFileRoute } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
-import { toast } from 'sonner'
+import { Suspense, useEffect, useState } from 'react'
 import { z } from 'zod'
-import ItemList from './-components/items-list'
+import {
+  ItemListGridSkeleton,
+  ItemListResolved,
+} from './-components/items-list'
 
 const itemsSearchSchema = z.object({
   q: z.string().default(''),
@@ -25,13 +27,12 @@ export type ItemsSearch = z.infer<typeof itemsSearchSchema>
 
 export const Route = createFileRoute('/dashboard/items/')({
   component: RouteComponent,
-  loader: () => getItemsFn(),
+  loader: () => ({ itemsPromise: getItemsFn() }), // unawaited promise
   validateSearch: itemsSearchSchema,
 })
 
 function RouteComponent() {
-  const { success, data } = Route.useLoaderData()
-  if (!success) toast.error('Something went wrong')
+  const { itemsPromise } = Route.useLoaderData()
 
   const { q, status } = Route.useSearch()
   const navigate = Route.useNavigate()
@@ -94,7 +95,9 @@ function RouteComponent() {
       </div>
 
       {/* List of saved items */}
-      <ItemList {...{ data, q, status }} />
+      <Suspense fallback={<ItemListGridSkeleton />}>
+        <ItemListResolved {...{ itemsPromise, q, status }} />
+      </Suspense>
     </div>
   )
 }
