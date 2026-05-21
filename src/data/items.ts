@@ -1,7 +1,8 @@
+import { prisma } from '@/db'
 import { authFnMiddleware } from '@/middlewares/auth'
 import {
-  bulkScrapeSchema,
   bulkImportSchema,
+  bulkScrapeSchema,
   importSchema,
 } from '@/schemas/import'
 import { createServerFn } from '@tanstack/react-start'
@@ -43,4 +44,24 @@ export const bulkScrapeUrlsFn = createServerFn({ method: 'POST' })
     const userId = context.session.user.id
 
     return await bulkScrapeUrlsService({ urls, userId })
+  })
+
+export const getItemsFn = createServerFn({ method: 'GET' })
+  .middleware([authFnMiddleware])
+  .handler(async ({ context }) => {
+    const userId = context.session.user.id
+
+    try {
+      const items = await prisma.savedItem.findMany({
+        where: {
+          userId,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      })
+      return { success: true, data: items }
+    } catch (error) {
+      return { success: false, data: [] }
+    }
   })
