@@ -7,7 +7,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible'
-import { getItemByIdFn } from '@/data/items'
+import { getItemByIdFn, saveSummaryAndGenerateTagsFn } from '@/data/items'
 import { cn } from '@/lib/utils'
 import type { FileRoutesByTo } from '@/routeTree.gen'
 import { useCompletion } from '@ai-sdk/react'
@@ -55,6 +55,16 @@ function RouteComponent() {
     streamProtocol: 'text',
     body: {
       itemId: data?.id,
+    },
+    onFinish: async (_prompt, completionText) => {
+      toast.success('Summary generated successfully and saving...')
+      await saveSummaryAndGenerateTagsFn({
+        data: {
+          id: data!.id,
+          summary: completionText,
+        },
+      })
+      toast.success('Summary generated and saved successfully')
     },
     onError: ({ message }) => {
       toast.error(`Something went wrong: ${message}`)
