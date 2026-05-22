@@ -16,7 +16,12 @@ export const authMiddleware = createMiddleware({ type: 'request' }).server(
   async ({ next, request }) => {
     // exclude public and auth route
     const url = new URL(request.url)
-    if (!url.pathname.startsWith('/dashboard')) return next()
+
+    if (
+      !url.pathname.startsWith('/dashboard') &&
+      !url.pathname.startsWith('/api/ai')
+    )
+      return next()
 
     const headers = getRequestHeaders()
     const session = await auth.api.getSession({ headers })
