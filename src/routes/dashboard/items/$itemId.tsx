@@ -9,6 +9,8 @@ import {
 } from '@/components/ui/collapsible'
 import { getItemByIdFn } from '@/data/items'
 import { cn } from '@/lib/utils'
+import type { FileRoutesByTo } from '@/routeTree.gen'
+import { useCompletion } from '@ai-sdk/react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import {
   ArrowLeft,
@@ -16,10 +18,16 @@ import {
   ChevronDown,
   Clock,
   ExternalLink,
+  Loader2,
+  Sparkles,
   User,
 } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
+
+// Server-side
+// import { Route as RouteApiAiSummary } from '@/routes/api/ai/summary'
+// RouteApiAiSummary.to
 
 export const Route = createFileRoute('/dashboard/items/$itemId')({
   component: RouteComponent,
@@ -41,6 +49,26 @@ function RouteComponent() {
   if (!success) toast.error('Something went wrong')
 
   const [contentOpen, setContentOpen] = useState(false)
+
+  const { complete, completion, isLoading } = useCompletion({
+    api: '/api/ai/summary' as const satisfies keyof FileRoutesByTo,
+    streamProtocol: 'text',
+    body: {
+      itemId: data?.id,
+    },
+    onError: ({ message }) => {
+      toast.error(`Something went wrong: ${message}`)
+    },
+  })
+
+  function handleGenerateSummary() {
+    if (!data?.content) {
+      toast.error('No content available to generate summary')
+      return
+    }
+    toast.success('Generating summary...')
+    complete(data.content)
+  }
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 w-full">
@@ -110,7 +138,47 @@ function RouteComponent() {
         )}
 
         {/* Summary Section */}
-        <p>Hey this is for the summary</p>
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent>
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-primary mb-3">
+                  Summary
+                </h2>
+
+                {completion || data?.summary ? (
+                  <MessageResponse>{completion}</MessageResponse>
+                ) : (
+                  <p className="text-muted-foreground italic">
+                    {data?.content
+                      ? 'No summary yet. Generate on with AI.'
+                      : 'No content available to summarize.'}
+                  </p>
+                )}
+              </div>
+
+              {data?.content && !data.summary && (
+                <Button
+                  size="sm"
+                  onClick={() => handleGenerateSummary()}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      Generate
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Content Section */}
         {data?.content && (
