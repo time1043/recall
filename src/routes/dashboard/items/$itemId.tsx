@@ -24,6 +24,16 @@ import { toast } from 'sonner'
 export const Route = createFileRoute('/dashboard/items/$itemId')({
   component: RouteComponent,
   loader: ({ params }) => getItemByIdFn({ data: { id: params.itemId } }),
+  head: ({ loaderData }) => ({
+    meta: [
+      { title: loaderData?.data?.title ?? 'Item Details' },
+      {
+        property: 'twitter:title',
+        content: loaderData?.data?.title ?? 'Item Details',
+      },
+      { property: 'og:image', content: loaderData?.data?.ogImage ?? '' },
+    ],
+  }),
 })
 
 function RouteComponent() {

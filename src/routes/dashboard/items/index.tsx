@@ -29,6 +29,12 @@ export const Route = createFileRoute('/dashboard/items/')({
   component: RouteComponent,
   loader: () => ({ itemsPromise: getItemsFn() }), // unawaited promise
   validateSearch: itemsSearchSchema,
+  head: () => ({
+    meta: [
+      { title: 'Saved Items' },
+      { property: 'og:title', content: 'Saved Items' }, // when sharing on social media
+    ],
+  }),
 })
 
 function RouteComponent() {
