@@ -1,11 +1,14 @@
 import { prisma } from '@/db'
+import { firecrawl } from '@/lib/firecrawl'
 import { model } from '@/lib/open-router'
 import { authFnMiddleware } from '@/middlewares/auth'
 import {
   bulkImportSchema,
   bulkScrapeSchema,
   importSchema,
+  searchSchema,
 } from '@/schemas/import'
+import type { SearchResultWeb } from '@mendable/firecrawl-js'
 import { notFound } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { generateText } from 'ai'
@@ -147,3 +150,33 @@ Example: technology, programming, web development, javascript`
 
 const userPrompt = (text: string) =>
   `Extract tags from this summary: \n\n${text}`
+
+export const searchWebFn = createServerFn({ method: 'POST' })
+  .middleware([authFnMiddleware])
+  .inputValidator(searchSchema)
+  .handler(async ({ data }) => {
+    const { query } = data
+
+    try {
+      // https://docs.firecrawl.dev/features/search
+      const result = await firecrawl.search(query, {
+        limit: 15,
+        // tbs: 'qdr:y',
+        // location: 'Germany',
+        // categories: ['github'],
+        // scrapeOptions: { formats: ['markdown'] },
+      })
+
+      const web = result.web
+        ?.filter((item): item is SearchResultWeb => 'url' in item)
+        .map((item) => ({
+          url: item.url,
+          title: item.title,
+          description: item.description,
+        })) as SearchResultWeb[]
+
+      return { success: true, data: web }
+    } catch (error) {
+      return { success: false, data: [] }
+    }
+  })

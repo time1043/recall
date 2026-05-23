@@ -13,10 +13,13 @@ import {
   FieldLabel,
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { searchWebFn } from '@/data/items'
 import { searchSchema } from '@/schemas/import'
+import type { SearchResultWeb } from '@mendable/firecrawl-js'
 import { useForm } from '@tanstack/react-form'
 import { Loader2, Search, Sparkles } from 'lucide-react'
-import { useTransition } from 'react'
+import { useState, useTransition } from 'react'
+import { toast } from 'sonner'
 
 export default function SearchForm() {
   const [isPending, startTransition] = useTransition()
@@ -30,10 +33,18 @@ export default function SearchForm() {
     },
     onSubmit: ({ value }) => {
       startTransition(async () => {
-        console.log({ value })
+        const { success, data } = await searchWebFn({ data: value })
+        if (!success) {
+          toast.error('Something went wrong')
+          return
+        }
+        toast.success('Scraped successfully')
+        setSearchResults(data)
       })
     },
   })
+
+  const [searchResults, setSearchResults] = useState<Array<SearchResultWeb>>([])
 
   return (
     <Card>
