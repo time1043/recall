@@ -98,15 +98,16 @@ function RouteComponent() {
       </div>
 
       {/* Cover */}
-      {data?.ogImage && (
-        <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-muted">
-          <img
-            className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
-            src={data.ogImage}
-            alt={data.title ?? 'Item Image'}
-          />
-        </div>
-      )}
+      <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-muted">
+        <img
+          className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+          src={
+            data?.ogImage ??
+            'https://images.unsplash.com/photo-1635776062127-d379bfcba9f8?q=80&w=1332&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
+          }
+          alt={data?.title ?? 'Item Image'}
+        />
+      </div>
 
       <div className="space-y-3">
         {/* Title */}
