@@ -9,12 +9,14 @@ import {
 import { getItemsFn } from '@/data/items'
 import { ItemStatus } from '@/generated/prisma/enums'
 import { createFileRoute } from '@tanstack/react-router'
-import { Suspense, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { z } from 'zod'
 import {
   ItemListGridSkeleton,
   ItemListResolved,
 } from './-components/items-list'
+
+const PAGE_SIZE = 6
 
 const itemsSearchSchema = z.object({
   q: z.string().default(''),
@@ -27,24 +29,27 @@ export type ItemsSearch = z.infer<typeof itemsSearchSchema>
 
 export const Route = createFileRoute('/dashboard/items/')({
   component: RouteComponent,
-  loader: () => ({ itemsPromise: getItemsFn() }), // unawaited promise
   validateSearch: itemsSearchSchema,
   head: () => ({
     meta: [
       { title: 'Saved Items' },
-      { property: 'og:title', content: 'Saved Items' }, // when sharing on social media
+      { property: 'og:title', content: 'Saved Items' },
     ],
   }),
 })
 
 function RouteComponent() {
-  const { itemsPromise } = Route.useLoaderData()
-
   const { q, status } = Route.useSearch()
   const navigate = Route.useNavigate()
-  // const navigate = useNavigate({ from: Route.fullPath })
 
   const [searchInput, setSearchInput] = useState(q)
+  const [items, setItems] = useState<
+    Awaited<ReturnType<typeof getItemsFn>>['items']
+  >([])
+  const [nextCursor, setNextCursor] = useState<string | null>(null)
+  const [hasMore, setHasMore] = useState(true)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
 
   function setSearch(params: Partial<ItemsSearch>) {
     navigate({
@@ -53,17 +58,51 @@ function RouteComponent() {
     })
   }
 
+  // Debounced search input
   useEffect(() => {
     if (searchInput === q) return
-
-    // debounce
     const timeoutId = setTimeout(() => {
-      // navigate({ search: (prev) => ({ ...prev, q: searchInput }) })
       setSearch({ q: searchInput })
     }, 800)
-
     return () => clearTimeout(timeoutId)
   }, [searchInput, q, navigate])
+
+  // Fetch first page when search params change
+  useEffect(() => {
+    let cancelled = false
+    setIsLoading(true)
+    setItems([])
+    setNextCursor(null)
+    setHasMore(true)
+
+    getItemsFn({ data: { cursor: null, limit: PAGE_SIZE, q, status } }).then(
+      (result) => {
+        if (cancelled) return
+        setItems(result.items)
+        setNextCursor(result.nextCursor)
+        setHasMore(result.hasMore)
+        setIsLoading(false)
+      },
+    )
+
+    return () => {
+      cancelled = true
+    }
+  }, [q, status])
+
+  const loadMore = useCallback(async () => {
+    if (!hasMore || isLoadingMore || !nextCursor) return
+    setIsLoadingMore(true)
+
+    const result = await getItemsFn({
+      data: { cursor: nextCursor, limit: PAGE_SIZE, q, status },
+    })
+
+    setItems((prev) => [...prev, ...result.items])
+    setNextCursor(result.nextCursor)
+    setHasMore(result.hasMore)
+    setIsLoadingMore(false)
+  }, [nextCursor, hasMore, isLoadingMore, q, status])
 
   return (
     <div className="flex flex-1 flex-col gap-6">
@@ -101,9 +140,16 @@ function RouteComponent() {
       </div>
 
       {/* List of saved items */}
-      <Suspense fallback={<ItemListGridSkeleton />}>
-        <ItemListResolved {...{ itemsPromise, q, status }} />
-      </Suspense>
+      {isLoading ? (
+        <ItemListGridSkeleton />
+      ) : (
+        <ItemListResolved
+          items={items}
+          hasMore={hasMore}
+          isLoadingMore={isLoadingMore}
+          loadMore={loadMore}
+        />
+      )}
     </div>
   )
 }

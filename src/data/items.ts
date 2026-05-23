@@ -1,4 +1,5 @@
 import { prisma } from '@/db'
+import { ItemStatus } from '@/generated/prisma/enums'
 import { firecrawl } from '@/lib/firecrawl'
 import { model } from '@/lib/open-router'
 import { authFnMiddleware } from '@/middlewares/auth'
@@ -62,21 +63,45 @@ export const bulkScrapeUrlsFn = createServerFn({ method: 'POST' })
 
 export const getItemsFn = createServerFn({ method: 'GET' })
   .middleware([authFnMiddleware])
-  .handler(async ({ context }) => {
+  .inputValidator(
+    z.object({
+      cursor: z.string().nullish(),
+      limit: z.number().default(12),
+      q: z.string().default(''),
+      status: z.string().default('all'),
+    }),
+  )
+  .handler(async ({ context, data }) => {
     const userId = context.session.user.id
+    const { cursor, limit, q, status } = data
 
-    try {
-      const items = await prisma.savedItem.findMany({
-        where: {
-          userId,
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
-      })
-      return { success: true, data: items }
-    } catch (error) {
-      return { success: false, data: [] }
+    const where = {
+      userId,
+      ...(status !== 'all' && { status: status as ItemStatus }),
+      ...(q && {
+        OR: [
+          { title: { contains: q, mode: 'insensitive' as const } },
+          { tags: { has: q } },
+        ],
+      }),
+    }
+
+    const items = await prisma.savedItem.findMany({
+      where,
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: limit + 1,
+      ...(cursor && { cursor: { id: cursor }, skip: 1 }),
+    })
+
+    const hasMore = items.length > limit
+    if (hasMore) items.pop()
+
+    return {
+      items,
+      nextCursor: hasMore ? items[items.length - 1]?.id : null,
+      hasMore,
     }
   })
 

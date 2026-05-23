@@ -96,6 +96,8 @@ model SavedItem {
   // 1 User : n SavedItem; 1 SavedItem : 1 User
   user        User       @relation(fields: [userId], references: [id])
   userId      String
+
+  @@index([userId, createdAt])
 }
 
 enum ItemStatus {
