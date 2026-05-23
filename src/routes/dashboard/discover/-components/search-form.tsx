@@ -6,6 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Field,
   FieldError,
@@ -13,7 +14,7 @@ import {
   FieldLabel,
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import { searchWebFn } from '@/data/items'
+import { bulkScrapeUrlsFn, searchWebFn } from '@/data/items'
 import { searchSchema } from '@/schemas/import'
 import type { SearchResultWeb } from '@mendable/firecrawl-js'
 import { useForm } from '@tanstack/react-form'
@@ -45,6 +46,37 @@ export default function SearchForm() {
   })
 
   const [searchResults, setSearchResults] = useState<Array<SearchResultWeb>>([])
+  const [selectedUrls, setSelectedUrls] = useState<Set<string>>(new Set())
+  const alreadySelectedAll = selectedUrls.size === searchResults.length
+
+  function handleSelectAll() {
+    if (alreadySelectedAll) setSelectedUrls(new Set())
+    else setSelectedUrls(new Set(searchResults.map((link) => link.url)))
+  }
+
+  function handleToggleUrl(url: string) {
+    const newSelected = new Set(selectedUrls)
+    if (newSelected.has(url)) newSelected.delete(url)
+    else newSelected.add(url)
+    setSelectedUrls(newSelected)
+  }
+
+  const [bulkIsPending, bulkStartTransition] = useTransition()
+
+  function handleBulkImport() {
+    bulkStartTransition(async () => {
+      if (selectedUrls.size === 0) {
+        toast.error('Please select at least one URL')
+        return
+      }
+
+      toast.success(`Importing ${selectedUrls.size} URLs...`)
+      await bulkScrapeUrlsFn({
+        data: { urls: Array.from(selectedUrls) },
+      })
+      toast.success(`Imported ${selectedUrls.size} URLs successfully`)
+    })
+  }
 
   return (
     <Card>
@@ -107,6 +139,61 @@ export default function SearchForm() {
             </Button>
           </FieldGroup>
         </form>
+
+        {/* Discovered links */}
+        {searchResults.length > 0 && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium">
+                Found {searchResults.length} URLs
+              </p>
+              <Button variant="outline" size="sm" onClick={handleSelectAll}>
+                {alreadySelectedAll ? 'Deselect All' : 'Select All'}
+              </Button>
+            </div>
+
+            <div className="max-h-80 space-y-2 overflow-y-auto rounded-md border p-4">
+              {searchResults.map((link) => (
+                <label
+                  key={link.url}
+                  className="hover:bg-muted/50 flex cursor-pointer items-start gap-3 rounded-md p-2"
+                >
+                  <Checkbox
+                    className="mt-0.5"
+                    checked={selectedUrls.has(link.url)}
+                    onCheckedChange={() => handleToggleUrl(link.url)}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">
+                      {link.title ?? 'Title has not been found'}
+                    </p>
+                    <p className="text-muted-foreground truncate text-xs">
+                      {link.description ?? 'Description has not been found'}
+                    </p>
+                    <p className="text-muted-foreground truncate text-xs">
+                      {link.url}
+                    </p>
+                  </div>
+                </label>
+              ))}
+            </div>
+
+            <Button
+              type="button"
+              className="w-full"
+              onClick={handleBulkImport}
+              disabled={bulkIsPending}
+            >
+              {bulkIsPending ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" /> Processing...
+                </>
+              ) : (
+                `Import ${selectedUrls.size} URLs`
+              )}
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   )
