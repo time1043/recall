@@ -14,6 +14,8 @@ import {
   FieldLabel,
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { Progress } from '@/components/ui/progress'
+import type { BulkScrapeProgress } from '@/data/items'
 import { bulkScrapeUrlsFn, searchWebFn } from '@/data/items'
 import { searchSchema } from '@/schemas/import'
 import type { SearchResultWeb } from '@mendable/firecrawl-js'
@@ -48,6 +50,7 @@ export default function SearchForm() {
   const [searchResults, setSearchResults] = useState<Array<SearchResultWeb>>([])
   const [selectedUrls, setSelectedUrls] = useState<Set<string>>(new Set())
   const alreadySelectedAll = selectedUrls.size === searchResults.length
+  const [progress, setProgress] = useState<BulkScrapeProgress | null>(null)
 
   function handleSelectAll() {
     if (alreadySelectedAll) setSelectedUrls(new Set())
@@ -70,11 +73,31 @@ export default function SearchForm() {
         return
       }
 
-      toast.success(`Importing ${selectedUrls.size} URLs...`)
-      await bulkScrapeUrlsFn({
+      setProgress({
+        completed: 0,
+        total: selectedUrls.size,
+        url: '',
+        status: 'success',
+      })
+      let successCount = 0
+      let failedCount = 0
+
+      const stream = await bulkScrapeUrlsFn({
         data: { urls: Array.from(selectedUrls) },
       })
-      toast.success(`Imported ${selectedUrls.size} URLs successfully`)
+      for await (const update of stream) {
+        setProgress(update)
+
+        if (update.status === 'success') successCount++
+        if (update.status === 'failed') failedCount++
+      }
+
+      if (failedCount > 0)
+        toast.error(`Imported ${successCount} URLs (${failedCount} failed)`)
+      else toast.success(`Imported ${successCount} URLs successfully`)
+
+      setSelectedUrls(new Set())
+      setProgress(null)
     })
   }
 
@@ -178,6 +201,20 @@ export default function SearchForm() {
               ))}
             </div>
 
+            {progress && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">
+                    Importing: {progress.completed} / {progress.total}
+                  </span>
+                  <span className="font-medium">
+                    {Math.round((progress.completed / progress.total) * 100)}%
+                  </span>
+                </div>
+                <Progress value={(progress.completed / progress.total) * 100} />
+              </div>
+            )}
+
             <Button
               type="button"
               className="w-full"
@@ -186,7 +223,10 @@ export default function SearchForm() {
             >
               {bulkIsPending ? (
                 <>
-                  <Loader2 className="size-4 animate-spin" /> Processing...
+                  <Loader2 className="size-4 animate-spin" />
+                  {progress
+                    ? `Importing ${progress.completed} / ${progress.total}`
+                    : 'Starting import...'}
                 </>
               ) : (
                 `Import ${selectedUrls.size} URLs`

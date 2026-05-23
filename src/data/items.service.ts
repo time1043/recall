@@ -2,6 +2,7 @@ import { prisma } from '@/db'
 import { firecrawl } from '@/lib/firecrawl'
 import { extractSchema } from '@/schemas/import'
 import z from 'zod'
+import type { BulkScrapeProgress } from './items'
 
 type ScrapeUrlServiceProps = { url: string; userId: string }
 type MapUrlServiceProps = { url: string; search: string }
@@ -82,13 +83,13 @@ export async function mapUrlService({ url, search }: MapUrlServiceProps) {
   }
 }
 
-export async function bulkScrapeUrlsService({
+// generator function (yield)
+export async function* bulkScrapeUrlsService({
   urls,
   userId,
 }: BulkScrapeUrlsServiceProps) {
-  // for (let i = 0; i < urls.length; i++) {
-  //   const url = urls[i]
-  for (const url of urls) {
+  for (let i = 0; i < urls.length; i++) {
+    const url = urls[i]
     const item = await prisma.savedItem.create({
       data: {
         url,
@@ -97,6 +98,8 @@ export async function bulkScrapeUrlsService({
       },
     })
     const itemId = item.id
+
+    let status: BulkScrapeProgress['status'] = 'success'
 
     try {
       const result = await firecrawl.scrape(url, {
@@ -132,8 +135,9 @@ export async function bulkScrapeUrlsService({
         },
       })
 
-      // return { success: true, data: updatedItem }
     } catch (error) {
+      status = 'failed'
+
       await prisma.savedItem.update({
         where: {
           id: itemId,
@@ -142,12 +146,15 @@ export async function bulkScrapeUrlsService({
           status: 'FAILED',
         },
       })
-
-      // return { success: false, data: failedItem }
     }
+
+    yield {
+      completed: i + 1,
+      total: urls.length,
+      url,
+      status,
+    } satisfies BulkScrapeProgress
   }
-  // TODO
-  // return { success: true, data: [] }
 }
 
 // async function scrapeSingleUrl({ url, itemId }: ScrapeSingleUrlProps) {}

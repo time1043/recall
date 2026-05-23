@@ -43,14 +43,21 @@ export const mapUrlFn = createServerFn({ method: 'POST' })
     return await mapUrlService({ url, search })
   })
 
+export type BulkScrapeProgress = {
+  completed: number
+  total: number
+  url: string
+  status: 'success' | 'failed'
+}
+
 export const bulkScrapeUrlsFn = createServerFn({ method: 'POST' })
   .middleware([authFnMiddleware])
   .inputValidator(bulkScrapeSchema)
-  .handler(async ({ data, context }) => {
+  .handler(async function* ({ data, context }) {
     const { urls } = data
     const userId = context.session.user.id
 
-    return await bulkScrapeUrlsService({ urls, userId })
+    yield* bulkScrapeUrlsService({ urls, userId })
   })
 
 export const getItemsFn = createServerFn({ method: 'GET' })
