@@ -11,7 +11,7 @@ import { getItemByIdFn, saveSummaryAndGenerateTagsFn } from '@/data/items'
 import { cn } from '@/lib/utils'
 import type { FileRoutesByTo } from '@/routeTree.gen'
 import { useCompletion } from '@ai-sdk/react'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useRouter } from '@tanstack/react-router'
 import {
   ArrowLeft,
   Calendar,
@@ -45,6 +45,8 @@ export const Route = createFileRoute('/dashboard/items/$itemId')({
 })
 
 function RouteComponent() {
+  const router = useRouter()
+
   const { success, data } = Route.useLoaderData()
   if (!success) toast.error('Something went wrong')
 
@@ -52,6 +54,7 @@ function RouteComponent() {
 
   const { complete, completion, isLoading } = useCompletion({
     api: '/api/ai/summary' as const satisfies keyof FileRoutesByTo,
+    initialCompletion: data?.summary ? data.summary : undefined,
     streamProtocol: 'text',
     body: {
       itemId: data?.id,
@@ -64,6 +67,8 @@ function RouteComponent() {
           summary: completionText,
         },
       })
+      // https://tanstack.com/router/v1/docs/guide/data-mutations#invalidating-tanstack-router-after-a-mutation
+      router.invalidate()
       toast.success('Summary generated and saved successfully')
     },
     onError: ({ message }) => {
